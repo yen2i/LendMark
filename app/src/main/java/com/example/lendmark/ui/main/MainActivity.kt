@@ -82,6 +82,19 @@ class MainActivity : AppCompatActivity() {
                 .set(room)
         }
 
+        // 2. Tag catalog
+        val tags = listOf(
+            mapOf("id" to "projector", "group" to "facility", "labelEn" to "Projector", "icon" to "projector"),
+            mapOf("id" to "whiteboard", "group" to "facility", "labelEn" to "Whiteboard", "icon" to "whiteboard"),
+            mapOf("id" to "power-outlets", "group" to "facility", "labelEn" to "Power outlets", "icon" to "power"),
+            mapOf("id" to "hdmi", "group" to "facility","labelEn" to "HDMI", "icon" to "hdmi"),
+            mapOf("id" to "mic", "group" to "facility", "labelEn" to "Microphone", "icon" to "mic"),
+            mapOf("id" to "aircon", "group" to "facility", "labelEn" to "Air conditioning", "icon" to "aircon"),
+            mapOf("id" to "large-hall", "group" to "roomType", "labelEn" to "Large lecture hall", "icon" to "hall")
+        )
+        for (tag in tags) {
+            db.collection("tag_catalog").document(tag["id"] as String).set(tag)
+        }
 
 
 
