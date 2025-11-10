@@ -96,6 +96,16 @@ class MainActivity : AppCompatActivity() {
             db.collection("tag_catalog").document(tag["id"] as String).set(tag)
         }
 
+        // 3. Semester / roomSchedules
+        val weekly = listOf(
+            mapOf("dow" to 1, "startMin" to 540, "endMin" to 630, "courseId" to "CS101", "title" to "Intro to CS", "dept" to "CSE"),
+            mapOf("dow" to 3, "startMin" to 780, "endMin" to 870, "courseId" to "EE210", "title" to "Circuits", "dept" to "EE")
+        )
+        val schedule = mapOf("weekly" to weekly)
+        db.collection("semesters").document("2025-fall")
+            .collection("roomSchedules").document("dasan(01)-107")
+            .set(schedule)
+
 
 
     }
