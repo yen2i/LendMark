@@ -31,9 +31,9 @@ class NotificationAdapter(
 
         fun bind(item: NotificationItem) {
             binding.tvTitle.text = item.title
-            binding.tvDetail.text = "예약 내역: ${item.location}"
+            binding.tvDetail.text = "Reservation: ${item.location}"
             binding.tvDate.text = "${item.date} · ${item.startTime} - ${item.endTime}"
-            binding.tvTimeLeft.text = "예정: ${item.remainingTime}"
+            binding.tvTimeLeft.text = "Scheduled: ${item.remainingTime}"
 
             //  시작/종료에 따라 아이콘 다르게 표시
             val iconRes = if (item.type == "end") {
@@ -46,7 +46,7 @@ class NotificationAdapter(
             // 클릭 이벤트 연결
             binding.root.setOnClickListener { onClick(item) }
 
-            // 🔹 읽음 처리 색상 (회색으로 표시)
+            // 읽음 처리 색상 (회색으로 표시)
             if (item.isRead) {
                 val gray = Color.parseColor("#D1D5DB")
                 binding.tvTitle.setTextColor(gray)
