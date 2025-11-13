@@ -85,9 +85,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun replaceFragment(fragment: Fragment) {
+    fun replaceFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction()
-            .replace(R.id.main_container, fragment)
+            .replace(R.id.main_container, fragment)   // <-- 여기 수정됨!
             .addToBackStack(null)
             .commit()
     }
@@ -96,6 +96,7 @@ class MainActivity : AppCompatActivity() {
         tvHeaderTitle.text = "즐겨찾기 관리"
     }
 }
+
 
 
 

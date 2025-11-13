@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
 
     implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation(libs.androidx.gridlayout)
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
 
 
