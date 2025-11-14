@@ -17,7 +17,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp"
-            android:paddingBottom="80dp">
+            android:paddingBottom="96dp">
 
             <!-- Search Bar -->
             <EditText
@@ -29,7 +29,7 @@
                 android:drawablePadding="8dp"
                 android:background="@drawable/bg_search_bar"
                 android:padding="12dp"
-                android:layout_marginTop="20dp"/>/>
+                android:layout_marginTop="20dp"/>
 
             <!-- Announcement Section -->
             <TextView
@@ -83,6 +83,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"/>
+
         </LinearLayout>
     </ScrollView>
 
@@ -93,7 +94,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:layout_margin="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="88dp"
         android:visibility="gone"
         tools:visibility="visible" />
 
