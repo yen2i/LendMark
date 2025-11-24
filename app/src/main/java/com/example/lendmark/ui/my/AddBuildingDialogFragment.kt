@@ -3,13 +3,15 @@ package com.example.lendmark.ui.my
 import android.app.Dialog
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.example.lendmark.R
-import com.example.lendmark.data.model.Building // Correct import
+import com.example.lendmark.data.model.Building
 
 class AddBuildingDialogFragment : DialogFragment() {
 
@@ -17,7 +19,7 @@ class AddBuildingDialogFragment : DialogFragment() {
 
     private val candidateBuildings = mutableListOf<Building>()
 
-    fun setCandidateBuildings(buildings: List<Building>) { // Type is now correct
+    fun setCandidateBuildings(buildings: List<Building>) {
         candidateBuildings.clear()
         candidateBuildings.addAll(buildings)
     }
@@ -28,6 +30,9 @@ class AddBuildingDialogFragment : DialogFragment() {
         val view = inflater.inflate(R.layout.dialog_add_building, null)
 
         val listContainer = view.findViewById<LinearLayout>(R.id.layoutAddBuildingList)
+        val btnClose = view.findViewById<ImageButton>(R.id.btnClose)
+
+        btnClose.setOnClickListener { dismiss() }
 
         candidateBuildings.forEach { building ->
             val itemView = inflater.inflate(
@@ -52,6 +57,16 @@ class AddBuildingDialogFragment : DialogFragment() {
         }
 
         builder.setView(view)
-        return builder.create()
+        val dialog = builder.create()
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        return dialog
+    }
+
+    override fun onStart() {
+        super.onStart()
+        dialog?.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.9).toInt(), // Set width to 90% of screen width
+            (resources.displayMetrics.heightPixels * 0.8).toInt()  // Set height to 80% of screen height
+        )
     }
 }
