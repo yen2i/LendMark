@@ -6,16 +6,6 @@
     android:orientation="vertical"
     android:background="@color/background_light">
 
-    <!-- 상단 툴바 -->
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbarFavorites"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/colorPrimary"
-        android:title="즐겨찾는 건물"
-        android:titleTextColor="@android:color/white"/>
-<!--        app:navigationIcon="@drawable/ic_arrow_back_24" -->
-
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -27,15 +17,34 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- 즐겨찾는 건물 섹션 -->
-            <TextView
-                android:layout_width="wrap_content"
+            <RelativeLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="즐겨찾는 건물"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary"
-                android:layout_marginBottom="8dp" />
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="10dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Favorite Buildings"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:id="@+id/tvEditFavorites"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentEnd="true"
+                    android:layout_marginTop="1dp"
+                    android:layout_marginEnd="6dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:text="Edit"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="16sp" />
+            </RelativeLayout>
 
             <LinearLayout
                 android:id="@+id/layoutFavoriteBuildings"
@@ -44,24 +53,47 @@
                 android:orientation="vertical"
                 android:layout_marginBottom="16dp" />
 
-            <!-- 건물 추가 버튼 (보라색 바) -->
+            <LinearLayout
+                android:id="@+id/editModeButtons"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCancelEdit"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Cancel" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDeleteFavorites"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Delete (0)"
+                    android:backgroundTint="@color/colorAccent"
+                    android:textColor="@android:color/white" />
+            </LinearLayout>
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAddBuilding"
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="+ 건물 추가"
+                android:text="+ Add Building"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:backgroundTint="@color/colorPrimary"
                 android:layout_marginBottom="24dp" />
 
-            <!-- 전체 건물 섹션 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="전체 건물"
-                android:textSize="14sp"
+                android:text="All Buildings"
+                android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="@color/text_primary"
                 android:layout_marginBottom="8dp" />
@@ -71,8 +103,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
-
         </LinearLayout>
     </ScrollView>
-
 </LinearLayout>
