@@ -89,7 +89,9 @@ class MyPageFragment : Fragment() {
             .addOnSuccessListener { result ->
                 val majorsList = result.documents.mapNotNull { it.getString("department") }
                 if (isAdded) { // Ensure fragment is still attached
-                    EditProfileDialog(majorsList).show(childFragmentManager, "EditProfileDialog")
+                    EditProfileDialog(majorsList) {
+                        refreshMyInfo()
+                    }.show(childFragmentManager, "EditProfileDialog")
                 }
             }
             .addOnFailureListener { e ->
@@ -97,4 +99,10 @@ class MyPageFragment : Fragment() {
                 Toast.makeText(requireContext(), "Failed to load majors list.", Toast.LENGTH_SHORT).show()
             }
     }
+    private fun refreshMyInfo() {
+        childFragmentManager.beginTransaction()
+            .replace(R.id.my_content_container, MyInfoFragment())
+            .commit()
+    }
+
 }

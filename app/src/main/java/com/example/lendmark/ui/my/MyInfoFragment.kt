@@ -42,7 +42,7 @@ class MyInfoFragment : Fragment() {
 
                 if (document != null) {
                     binding?.valueName?.text = document.getString("name")
-                    binding?.valueMajor?.text = document.getString("major")
+                    binding?.valueMajor?.text = document.getString("department")
                     binding?.valueEmail?.text = document.getString("email")
                     binding?.valuePhone?.text = document.getString("phone")
 
