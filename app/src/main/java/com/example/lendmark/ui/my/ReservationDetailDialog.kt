@@ -5,18 +5,20 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
+import com.example.lendmark.R
 import com.example.lendmark.databinding.DialogReservationDetailBinding
 
 class ReservationDetailDialog(
     private val reservation: Reservation,
-    private val onCancelClick: (Int) -> Unit // 콜백 전달받기
+    private val onCancelClick: (Int) -> Unit
 ) : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val binding = DialogReservationDetailBinding.inflate(LayoutInflater.from(context))
 
-        // 예약 정보 세팅
+        // Set reservation info
         binding.tvBuildingName.text = reservation.building
         binding.tvRoomName.text = reservation.room
         binding.tvDate.text = reservation.date
@@ -24,39 +26,50 @@ class ReservationDetailDialog(
         binding.tvAttendees.text = "${reservation.attendees} people"
         binding.tvPurpose.text = reservation.purpose
 
-        // 상태에 따라 버튼 표시 제어
-        when (reservation.status) {
-            "Finished" -> {
+        // Control button visibility and state based on status and cancellation flag
+        when {
+            // Case 1: Reservation was cancelled
+            reservation.isCancelled -> {
+                binding.btnRegisterInfo.visibility = View.GONE
+                binding.btnCancel.visibility = View.VISIBLE
+                binding.btnCancel.text = "Cancelled"
+                binding.btnCancel.isEnabled = false
+                binding.btnCancel.setTextColor(ContextCompat.getColor(requireContext(), R.color.gray))
+                binding.btnCancel.strokeColor = ContextCompat.getColorStateList(requireContext(), R.color.gray)
+            }
+            // Case 2: Reservation is finished (and not cancelled)
+            reservation.status == "Finished" -> {
                 binding.btnCancel.visibility = View.GONE
                 binding.btnRegisterInfo.visibility = View.VISIBLE
             }
-            "Cancelled" -> {
-                binding.btnCancel.visibility = View.GONE
-                binding.btnRegisterInfo.visibility = View.GONE
-            }
+            // Case 3: Reservation is active (Approved)
             else -> {
-                binding.btnCancel.visibility = View.VISIBLE
                 binding.btnRegisterInfo.visibility = View.GONE
+                binding.btnCancel.visibility = View.VISIBLE
+                binding.btnCancel.text = "Cancel Reservation"
+                binding.btnCancel.isEnabled = true
+                binding.btnCancel.setTextColor(ContextCompat.getColor(requireContext(), R.color.red))
+                binding.btnCancel.strokeColor = ContextCompat.getColorStateList(requireContext(), R.color.red)
             }
         }
 
-        // 취소 버튼 클릭 시 콜백 호출
+        // Set click listener for the active cancel button
         binding.btnCancel.setOnClickListener {
-            onCancelClick(reservation.id)
-            dismiss()
+            if (it.isEnabled) { // Only trigger if the button is enabled
+                onCancelClick(reservation.id)
+                dismiss()
+            }
         }
 
-        // 닫기 버튼
+        // Close button
         binding.btnClose.setOnClickListener {
             dismiss()
         }
 
-        // 다이얼로그 생성
         val dialog = AlertDialog.Builder(requireActivity())
             .setView(binding.root)
             .create()
 
-        // 배경 투명 처리
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
         return dialog
     }
