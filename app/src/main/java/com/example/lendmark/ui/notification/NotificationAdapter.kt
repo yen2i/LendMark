@@ -10,6 +10,7 @@ import com.example.lendmark.databinding.ItemNotificationBinding
 // 알림 데이터 모델
 data class NotificationItem(
     val id: Int,
+    val reservationId: String,
     val title: String,              // 예: "강의실 예약 시작 30분 전입니다"
     val location: String,           // 예: "프론티어관 107호"
     val date: String,               // 예: "2025-10-23"
