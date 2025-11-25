@@ -15,6 +15,7 @@ import com.example.lendmark.data.model.Building
 import com.example.lendmark.ui.main.MainActivity
 import com.example.lendmark.ui.room.RoomListFragment
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 
 class MyFavoriteFragment : Fragment() {
@@ -50,22 +51,26 @@ class MyFavoriteFragment : Fragment() {
                 val favoriteBuildingIds = userDoc.get("favorites") as? List<String> ?: emptyList()
 
                 if (favoriteBuildingIds.isEmpty()) {
-                    favoritesContainer.removeAllViews()
-                    val tv = TextView(requireContext()).apply {
-                        text = "No favorite buildings yet."
-                        setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
-                    }
-                    favoritesContainer.addView(tv)
+                    displayNoFavorites()
                     return@addOnSuccessListener
                 }
 
-                // Fetch building details
-                db.collection("buildings").whereIn("id", favoriteBuildingIds).get()
-                    .addOnSuccessListener { buildingsSnapshot ->
+                // 🔥 핵심: 문서 ID 기반 whereIn
+                db.collection("buildings")
+                    .whereIn(FieldPath.documentId(), favoriteBuildingIds)
+                    .get()
+                    .addOnSuccessListener { snapshot ->
 
                         if (!isAdded) return@addOnSuccessListener
 
-                        val buildings = buildingsSnapshot.toObjects(Building::class.java)
+                        val buildings = snapshot.documents.map { doc ->
+                            Building(
+                                id = doc.id,
+                                name = doc.getString("name") ?: "",
+                                roomCount = doc.getLong("roomCount")?.toInt() ?: 0
+                            )
+                        }
+
                         displayFavorites(buildings)
                     }
                     .addOnFailureListener {
@@ -81,20 +86,24 @@ class MyFavoriteFragment : Fragment() {
             }
     }
 
+    private fun displayNoFavorites() {
+        favoritesContainer.removeAllViews()
+        val tv = TextView(requireContext()).apply {
+            text = "Your favorite buildings will appear here."
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.text_secondary))
+        }
+        favoritesContainer.addView(tv)
+    }
+
     private fun displayFavorites(buildings: List<Building>) {
 
-        if (!isAdded) return
         favoritesContainer.removeAllViews()
 
         val safeContext = context ?: return
         val inflater = LayoutInflater.from(safeContext)
 
         if (buildings.isEmpty()) {
-            val tv = TextView(safeContext).apply {
-                text = "Your favorite buildings will appear here."
-                setTextColor(ContextCompat.getColor(safeContext, R.color.text_secondary))
-            }
-            favoritesContainer.addView(tv)
+            displayNoFavorites()
             return
         }
 
