@@ -101,7 +101,7 @@ class MyReservationFragment : Fragment() {
             val btnRegisterInfo = card.findViewById<MaterialButton>(R.id.btnRegisterInfo)
 
             tvBuildingRoom.text = "${reservation.buildingId} ${reservation.roomId}"
-            tvDateTime.text = "${reservation.date} • ${periodToTime(reservation.periodStart)} - ${periodToTime(reservation.periodEnd)}"
+            tvDateTime.text = "${reservation.date} • ${periodToTime(reservation.periodStart)} - ${periodToTime(reservation.periodEnd + 1)}"
             tvAttendees.text = "Attendees: ${reservation.attendees}"
             tvPurpose.text = "Purpose: ${reservation.purpose}"
             tvStatus.text = reservation.status.replaceFirstChar { it.uppercase() }
