@@ -19,17 +19,43 @@
             android:padding="16dp"
             android:paddingBottom="96dp">
 
-            <!-- Search Bar -->
-            <EditText
-                android:id="@+id/searchBar"
+            <!-- Search Bar with Chatbot -->
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Search building"
-                android:drawableStart="@drawable/ic_search"
-                android:drawablePadding="8dp"
-                android:background="@drawable/bg_search_bar"
-                android:padding="12dp"
-                android:layout_marginTop="20dp"/>
+                android:layout_marginTop="20dp">
+
+                <ImageView
+                    android:id="@+id/iv_chatbot"
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentBottom="true"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginBottom="3dp"
+                    android:background="@drawable/oval_white"
+                    android:clickable="true"
+                    android:contentDescription="Chatbot Icon"
+                    android:elevation="6dp"
+                    android:focusable="true"
+                    android:outlineProvider="background"
+                    android:padding="8dp"
+                    android:src="@drawable/chatbot" />
+
+                <EditText
+                    android:id="@+id/searchBar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:layout_toStartOf="@+id/iv_chatbot"
+                    android:background="@drawable/bg_search_bar"
+                    android:drawableStart="@drawable/ic_search"
+                    android:drawablePadding="8dp"
+                    android:hint="Search building"
+                    android:padding="12dp" />
+
+            </RelativeLayout>
+
 
             <!-- Announcement Section -->
             <TextView

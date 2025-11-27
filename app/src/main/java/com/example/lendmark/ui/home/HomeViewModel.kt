@@ -3,10 +3,11 @@ package com.example.lendmark.ui.home
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.example.lendmark.ui.home.adapter.Announcement
 import com.example.lendmark.ui.home.adapter.Room
+import com.google.firebase.Timestamp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 // Firestore 기반 Upcoming 예약
 data class UpcomingReservationInfo(
@@ -37,16 +38,50 @@ class HomeViewModel : ViewModel() {
             Announcement("Review Event", "If you leave a review for your classroom, we will give you a voucher.")
         )
 
-        // (2) 자주 사용하는 강의실 더미 (홈 UI 유지용)
-        _frequentlyUsedRooms.value = listOf(
-            Room("Frontier Hall 107", ""),
-            Room("Dasan Hall 301", ""),
-            Room("Mirae Hall 205", "")
-        )
+        // (2) Firestore에서 자주 사용하는 강의실 불러오기
+        loadFrequentlyUsedRooms()
 
         // (3) Firestore에서 곧 있을 예약 불러오기
         loadUpcomingReservation()
     }
+
+    private fun loadFrequentlyUsedRooms() {
+        if (uid == null) {
+            _frequentlyUsedRooms.value = emptyList()
+            return
+        }
+
+        db.collection("reservations")
+            .whereEqualTo("userId", uid)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (documents.isEmpty) {
+                    _frequentlyUsedRooms.value = emptyList()
+                    return@addOnSuccessListener
+                }
+
+                val roomCounts = documents.mapNotNull { doc ->
+                    val buildingId = doc.getString("buildingId")
+                    val roomId = doc.getString("roomId")
+                    if (buildingId != null && roomId != null) {
+                        "$buildingId $roomId"
+                    } else {
+                        null
+                    }
+                }.groupingBy { it }.eachCount()
+
+                val topRooms = roomCounts.entries
+                    .sortedByDescending { it.value }
+                    .take(3)
+                    .map { Room(it.key, "") }
+
+                _frequentlyUsedRooms.value = topRooms
+            }
+            .addOnFailureListener {
+                _frequentlyUsedRooms.value = emptyList() // Handle error
+            }
+    }
+
 
     private fun loadUpcomingReservation() {
         if (uid == null) {
@@ -57,7 +92,8 @@ class HomeViewModel : ViewModel() {
         db.collection("reservations")
             .whereEqualTo("userId", uid)
             .whereEqualTo("status", "approved")
-            .orderBy("timestamp") // 가장 가까운 예약 순으로 정렬
+            .whereGreaterThanOrEqualTo("timestamp", Timestamp.now()) // 올바른 "곧 있을" 예약 로직
+            .orderBy("timestamp")
             .limit(1)
             .get()
             .addOnSuccessListener { snap ->

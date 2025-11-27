@@ -1,5 +1,6 @@
 package com.example.lendmark.ui.home
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +10,7 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.lendmark.R
 import com.example.lendmark.databinding.FragmentHomeBinding
+import com.example.lendmark.ui.chatbot.ChatbotActivity
 import com.example.lendmark.ui.home.adapter.AnnouncementAdapter
 import com.example.lendmark.ui.home.adapter.FrequentlyUsedRoomsAdapter
 import com.example.lendmark.ui.my.ReservationDetailDialogFS
@@ -49,6 +51,11 @@ class HomeFragment : Fragment() {
 
         binding.tvSeeAllBuildings.setOnClickListener {
             activity?.findViewById<BottomNavigationView>(R.id.bottomNav)?.selectedItemId = R.id.nav_book
+        }
+
+        binding.ivChatbot.setOnClickListener {
+            val intent = Intent(requireContext(), ChatbotActivity::class.java)
+            startActivity(intent)
         }
     }
 
