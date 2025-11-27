@@ -46,7 +46,6 @@
             android:textColor="#000000"
             android:text="날짜 선택" />
 
-        <!-- 여백 -->
         <View
             android:layout_width="match_parent"
             android:layout_height="12dp" />
@@ -99,6 +98,15 @@
             android:background="@drawable/bg_primary_button" />
 
     </LinearLayout>
+
+    <!-- Fragment container (default: hidden) -->
+    <FrameLayout
+        android:id="@+id/chatbotFragmentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="gone"
+        android:background="#FFFFFF" />
 
     <!-- 채팅 리스트 -->
     <androidx.recyclerview.widget.RecyclerView

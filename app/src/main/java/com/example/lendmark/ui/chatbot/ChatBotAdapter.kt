@@ -1,6 +1,10 @@
 package com.example.lendmark.ui.chatbot
 
-
+import android.text.Html
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.method.LinkMovementMethod
+import android.text.style.ClickableSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,7 +14,8 @@ import com.example.lendmark.R
 import com.example.lendmark.data.model.ChatMessage
 
 class ChatBotAdapter(
-    private val messages: MutableList<ChatMessage>
+    private val messages: MutableList<ChatMessage>,
+    private val onRoomClick: (String) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private val TYPE_USER = 1
@@ -38,7 +43,7 @@ class ChatBotAdapter(
         if (holder is UserViewHolder) {
             holder.userMsg.text = msg.message
         } else if (holder is AiViewHolder) {
-            holder.aiMsg.text = msg.message
+            bindAiMessage(holder, msg.message)
         }
     }
 
@@ -49,12 +54,51 @@ class ChatBotAdapter(
         notifyItemInserted(messages.size - 1)
     }
 
-    // User 말풍선
+    // -------------------- AI 메시지 처리 --------------------
+    private fun bindAiMessage(holder: AiViewHolder, rawText: String) {
+
+        //  파싱: <room id="101">101호 보기</room>
+        val pattern = Regex("<room id=\"(.*?)\">(.*?)</room>")
+        var spannable = SpannableString(rawText.replace(pattern, "$2"))
+
+        val matches = pattern.findAll(rawText).toList()
+
+        var offset = 0
+        matches.forEachIndexed { index, match ->
+
+            val roomId = match.groupValues[1]
+            val displayText = match.groupValues[2]
+
+            val startIndex = spannable.indexOf(displayText, offset)
+            val endIndex = startIndex + displayText.length
+            offset = endIndex
+
+            if (startIndex != -1) {
+                val clickable = object : ClickableSpan() {
+                    override fun onClick(widget: View) {
+                        onRoomClick(roomId)
+                    }
+                }
+
+                spannable.setSpan(
+                    clickable,
+                    startIndex,
+                    endIndex,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+        }
+
+        holder.aiMsg.text = spannable
+        holder.aiMsg.movementMethod = LinkMovementMethod.getInstance()
+    }
+
+
+    // -------------------- ViewHolders --------------------
     class UserViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val userMsg: TextView = itemView.findViewById(R.id.tvUserMessage)
     }
 
-    // AI 말풍선
     class AiViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val aiMsg: TextView = itemView.findViewById(R.id.tvAiMessage)
     }

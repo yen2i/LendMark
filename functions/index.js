@@ -227,9 +227,10 @@ exports.createReservation = onCall({ region: REGION }, async (req) => {
 
 exports.chatbotAvailableRoomsV2 = onCall({ region: REGION }, async (req) => {
   try {
+    // OpenAI API 불러오기
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY || process.env.openai_key || process.env.openai?.key,
-      });
+    });
 
     const { buildingId, buildingName, date, hour } = req.data;
 
@@ -237,6 +238,18 @@ exports.chatbotAvailableRoomsV2 = onCall({ region: REGION }, async (req) => {
     if (!buildingName) throw new Error("buildingName missing");
     if (!date) throw new Error("date missing (YYYY-MM-DD)");
     if (hour === undefined) throw new Error("hour missing (0~23)");
+
+    /* ============================================================
+       ⭐ 0) 예약 가능 시간 범위 체크
+       ============================================================ */
+    if (hour < 8 || hour >= 18) {
+      return {
+        ok: true,
+        answer: `지금 선택하신 ${hour}시는 예약이 불가능한 시간입니다.
+강의실 예약은 매일 오전 08시부터 오후 18시까지만 가능합니다.`,
+        rooms: [],
+      };
+    }
 
     const db = admin.firestore();
 
@@ -257,22 +270,17 @@ exports.chatbotAvailableRoomsV2 = onCall({ region: REGION }, async (req) => {
     }
     const targetDay = getDayCode(date);
 
-
     /* ============================================================
-       3) timetable 불러오기 (정규 수업)
+       3) building timetable 불러오기
        ============================================================ */
-    const buildingDoc = await db
-      .collection("buildings")
-      .doc(buildingId)
-      .get();
+    const buildingDoc = await db.collection("buildings").doc(buildingId).get();
 
     if (!buildingDoc.exists) throw new Error("Building not found");
 
     const timetable = buildingDoc.get("timetable") ?? {};
 
-
     /* ============================================================
-       4) 예약 불러오기 (period 기반)
+       4) 예약 데이터(period 기반)
        ============================================================ */
     const reservationSnap = await db
       .collection("reservations")
@@ -290,19 +298,15 @@ exports.chatbotAvailableRoomsV2 = onCall({ region: REGION }, async (req) => {
       };
     });
 
-
     /* ============================================================
-       5) 사용 가능 여부 체크 (period 기준)
+       5) 사용 가능 여부 체크
        ============================================================ */
     function isRoomAvailable(roomId, roomData) {
-      // (A) 정규 수업
+      // (A) 정규수업
       if (roomData?.schedule) {
         for (const ev of roomData.schedule) {
-
-          // 요일 다르면 skip
           if (ev.day !== targetDay) continue;
 
-          // 교시가 겹치면 사용 불가
           const s = ev.periodStart;
           const e = ev.periodEnd;
 
@@ -311,7 +315,7 @@ exports.chatbotAvailableRoomsV2 = onCall({ region: REGION }, async (req) => {
         }
       }
 
-      // (B) 예약
+      // (B) 학생 예약
       for (const r of reservationEvents) {
         if (r.roomId !== roomId) continue;
 
@@ -325,9 +329,8 @@ exports.chatbotAvailableRoomsV2 = onCall({ region: REGION }, async (req) => {
       return true;
     }
 
-
     /* ============================================================
-       6) 전체 강의실 중 사용 가능한 목록 추출
+       6) 사용 가능한 강의실 목록 추출
        ============================================================ */
     const availableRooms = Object.entries(timetable)
       .filter(([roomId, roomData]) => isRoomAvailable(roomId, roomData))
@@ -335,9 +338,16 @@ exports.chatbotAvailableRoomsV2 = onCall({ region: REGION }, async (req) => {
 
     logger.info("Available rooms:", availableRooms);
 
+    /* ============================================================
+       7) 강의실 목록 예쁘게 포맷팅
+       ============================================================ */
+    const prettyList =
+      availableRooms.length > 0
+        ? availableRooms.map((r) => `- ${r}`).join("\n")
+        : "없음";
 
     /* ============================================================
-       7) AI 자연어 응답 생성
+       8) OpenAI 자연어 응답 생성
        ============================================================ */
     const prompt = `
 너는 서울과학기술대학교 강의실 예약 도우미 AI야.
@@ -346,10 +356,16 @@ exports.chatbotAvailableRoomsV2 = onCall({ region: REGION }, async (req) => {
 - 시간: ${hour}시
 - 건물: ${buildingName}
 
-해당 시간에 사용 가능한 강의실:
-${availableRooms.length > 0 ? availableRooms.join(", ") : "없음"}
+해당 시간에 사용 가능한 강의실 목록은 다음과 같아:
 
-학생이 이해하기 쉽게, 자연스럽고 친절하게 한 문단으로 답변해줘.
+${prettyList}
+
+학생이 보기 쉽도록:
+• 줄바꿈 유지
+• 불렛포인트 형식 유지
+• 자연스럽고 친절한 한 단락 설명
+
+이 기준을 지켜서 답변해줘.
 `;
 
     const completion = await openai.chat.completions.create({
@@ -360,10 +376,8 @@ ${availableRooms.length > 0 ? availableRooms.join(", ") : "없음"}
     const answer = completion.choices[0].message.content;
 
     return { ok: true, answer, rooms: availableRooms };
-
   } catch (err) {
     logger.error("chatbotAvailableRoomsV2 error:", err);
     return { ok: false, error: err.message };
   }
 });
-

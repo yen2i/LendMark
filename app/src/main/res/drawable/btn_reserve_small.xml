@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 눌렀을 때 (press) -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#2E1A70"/> <!-- 살짝 진하게 -->
+            <corners android:radius="12dp"/>
+            <padding
+                android:left="12dp"
+                android:top="8dp"
+                android:right="12dp"
+                android:bottom="8dp" />
+        </shape>
+    </item>
+
+    <!-- 일반 상태 -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#4B2DBE"/> <!-- 노란보라톤(#4B2DBE) AI 어시 UI와 잘 어울려 -->
+            <corners android:radius="12dp"/>
+            <padding
+                android:left="12dp"
+                android:top="8dp"
+                android:right="12dp"
+                android:bottom="8dp" />
+        </shape>
+    </item>
+
+</selector>

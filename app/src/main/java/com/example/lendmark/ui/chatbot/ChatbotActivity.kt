@@ -1,8 +1,11 @@
 package com.example.lendmark.ui.chatbot
 
+import android.app.AlertDialog
 import android.app.DatePickerDialog
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.Parcel
 import android.view.View
 import android.widget.*
 import androidx.annotation.RequiresApi
@@ -12,10 +15,17 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.lendmark.R
 import com.example.lendmark.data.model.ChatMessage
+import com.example.lendmark.ui.room.RoomScheduleFragment
+import com.google.android.material.datepicker.CalendarConstraints
+import com.google.android.material.datepicker.DateValidatorPointForward
+import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneId
+import java.util.Calendar
 
 
 class ChatBotActivity : AppCompatActivity() {
@@ -71,44 +81,77 @@ class ChatBotActivity : AppCompatActivity() {
         supportActionBar?.title = "AI Assistant"
     }
 
+    private fun openRoomSchedule(buildingId: String, buildingName: String, roomId: String) {
+        val fragment = RoomScheduleFragment().apply {
+            arguments = Bundle().apply {
+                putString("buildingId", buildingId)
+                putString("buildingName", buildingName)
+                putString("roomId", roomId)
+            }
+        }
+
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.chatbotFragmentContainer, fragment)
+            .addToBackStack(null)    // 뒤로가기 가능하게
+            .commit()
+    }
+
+
     /* ---------------- RecyclerView ---------------- */
     private fun setupRecyclerView() {
-        adapter = ChatBotAdapter(messages)
+        adapter = ChatBotAdapter(
+            messages,
+            onRoomClick = { roomId ->
+                val building = buildingOptions[spinnerBuilding.selectedItemPosition]
+                openRoomSchedule(building.id, building.name, roomId)
+            }
+        )
+
         recyclerChat.adapter = adapter
         recyclerChat.layoutManager = LinearLayoutManager(this).apply {
             stackFromEnd = true
         }
     }
 
-    /* ---------------- Date Picker ---------------- */
+
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun showCuteDatePicker() {
+
+        val constraints = CalendarConstraints.Builder()
+            .setValidator(WeekendBlockValidator())
+            .build()
+
+        val datePicker = MaterialDatePicker.Builder.datePicker()
+            .setTitleText("날짜 선택")
+            .setCalendarConstraints(constraints)
+            .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
+            .build()
+
+        datePicker.addOnPositiveButtonClickListener { selection ->
+            val cal = Calendar.getInstance().apply { timeInMillis = selection }
+            val year = cal.get(Calendar.YEAR)
+            val month = cal.get(Calendar.MONTH) + 1
+            val day = cal.get(Calendar.DAY_OF_MONTH)
+
+            val formatted = String.format("%04d-%02d-%02d", year, month, day)
+            tvDateSelector.text = formatted
+            updateTimeSpinner(formatted)
+        }
+
+        datePicker.show(supportFragmentManager, "cute_date_picker")
+    }
+
+
     @RequiresApi(Build.VERSION_CODES.O)
     private fun setupDatePicker() {
-
         tvDateSelector.setOnClickListener {
-
-            val today = LocalDate.now()
-            val endDate = today.plusDays(28)
-
-            val dialog = DatePickerDialog(
-                this,
-                { _, year, month, day ->
-                    val date = LocalDate.of(year, month + 1, day)
-                    tvDateSelector.text = date.toString()
-
-                    // 날짜 바뀌면 시간 다시 세팅
-                    updateTimeSpinner(date.toString())
-                },
-                today.year,
-                today.monthValue - 1,
-                today.dayOfMonth
-            )
-
-            dialog.datePicker.minDate = today.toEpochDay() * 86400000
-            dialog.datePicker.maxDate = endDate.toEpochDay() * 86400000
-
-            dialog.show()
+            showCuteDatePicker()
         }
     }
+
+
+
 
     /* ---------------- Time Spinner ---------------- */
     @RequiresApi(Build.VERSION_CODES.O)
