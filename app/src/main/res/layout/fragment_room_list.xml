@@ -19,7 +19,8 @@
         android:textStyle="bold"
         android:textColor="#190848"
         android:gravity="center"
-        android:layout_marginBottom="20dp" />
+        android:layout_marginBottom="20dp"
+        android:layout_marginTop="20dp"/>
 
     <!-- 강의실 리스트 -->
     <androidx.recyclerview.widget.RecyclerView
@@ -28,6 +29,7 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:paddingBottom="24dp"
+        android:layout_marginBottom="90dp"
         tools:listitem="@layout/item_room" />
 
 </LinearLayout>

@@ -97,7 +97,9 @@ class RoomListFragment : Fragment() {
 
                 roomList.clear()
 
-                for ((roomId, _) in timetableMap) {
+                val sortedRoomIds = timetableMap.keys.sorted()
+
+                for (roomId in sortedRoomIds) {
 
                     val floor =
                         if (roomId.isNotEmpty()) roomId.first().toString() + "F" else "-"
@@ -112,7 +114,6 @@ class RoomListFragment : Fragment() {
                             floor = floor
                         )
                     )
-
                 }
 
                 Log.d("ROOM_DEBUG", "Loaded rooms: ${roomList.size}")
@@ -120,9 +121,11 @@ class RoomListFragment : Fragment() {
                 adapter.notifyDataSetChanged()
             }
             .addOnFailureListener { e ->
-                Toast.makeText(requireContext(),
+                Toast.makeText(
+                    requireContext(),
                     "강의실 정보를 불러올 수 없습니다: ${e.message}",
-                    Toast.LENGTH_SHORT).show()
+                    Toast.LENGTH_SHORT
+                ).show()
             }
     }
 

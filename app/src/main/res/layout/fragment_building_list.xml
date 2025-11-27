@@ -26,7 +26,7 @@
         android:id="@+id/rvBuildingList"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="35dp"
+        android:layout_marginBottom="90dp"
         android:clipToPadding="false"
         android:paddingBottom="24dp"
         tools:listitem="@layout/item_building" />
