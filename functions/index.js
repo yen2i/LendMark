@@ -30,7 +30,7 @@ const transporter = nodemailer.createTransport({
 });
 
 /** 1-1. 인증코드 발송 */
-exports.sendVerificationCode = onCall({ region: REGION }, async (req) => {
+exports.sendVerificationCode = onCall({ region: "us-central1" }, async (req) => {
   const email = (req.data?.email || "").trim().toLowerCase();
   if (!email) throw new Error("Missing email");
 
@@ -60,7 +60,7 @@ exports.sendVerificationCode = onCall({ region: REGION }, async (req) => {
 });
 
 /** 1-2. 인증코드 검증 */
-exports.verifyEmailCode = onCall({ region: REGION }, async (req) => {
+exports.verifyEmailCode = onCall({ region: "us-central1" }, async (req) => {
   const email = (req.data?.email || "").trim().toLowerCase();
   const code = (req.data?.code || "").toString().trim();
 

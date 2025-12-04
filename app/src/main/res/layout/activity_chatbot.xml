@@ -20,52 +20,54 @@
          ======================= -->
     <LinearLayout
         android:id="@+id/chatLayout"
-        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:orientation="vertical">
 
         <!-- 선택 영역 -->
         <LinearLayout
             android:id="@+id/selectorContainer"
-            android:orientation="vertical"
-            android:padding="16dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@android:color/white"
-            android:elevation="4dp">
+            android:elevation="4dp"
+            android:orientation="vertical"
+            android:padding="16dp">
 
             <!-- 날짜 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="날짜"
-                android:textStyle="bold"
                 android:paddingBottom="4dp"
-                android:textColor="#444" />
+                android:text="날짜"
+                android:textColor="#444"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvDateSelector"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
+                android:background="@drawable/bg_spinner2"
                 android:gravity="center_vertical"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
-                android:textSize="16sp"
-                android:background="@drawable/bg_spinner2"
+                android:text="날짜 선택"
                 android:textColor="#000000"
-                android:text="날짜 선택" />
+                android:textSize="16sp" />
 
-            <View android:layout_width="match_parent" android:layout_height="12dp" />
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="12dp" />
 
             <!-- 시간 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="시간"
-                android:textStyle="bold"
                 android:paddingBottom="4dp"
-                android:textColor="#444" />
+                android:text="시간"
+                android:textColor="#444"
+                android:textStyle="bold" />
 
             <Spinner
                 android:id="@+id/spinnerTime"
@@ -73,16 +75,18 @@
                 android:layout_height="48dp"
                 android:background="@drawable/bg_spinner2" />
 
-            <View android:layout_width="match_parent" android:layout_height="12dp" />
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="12dp" />
 
             <!-- 건물 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="건물"
-                android:textStyle="bold"
                 android:paddingBottom="4dp"
-                android:textColor="#444" />
+                android:text="건물"
+                android:textColor="#444"
+                android:textStyle="bold" />
 
             <Spinner
                 android:id="@+id/spinnerBuilding"
@@ -96,7 +100,7 @@
                 android:layout_height="52dp"
                 android:layout_marginTop="20dp"
                 android:background="@drawable/bg_primary_button"
-                android:text="AI에게 물어보기"
+                android:text="빠른 강의실 찾기"
                 android:textColor="@android:color/white"
                 android:textStyle="bold" />
 
@@ -108,8 +112,8 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:padding="12dp"
-            android:clipToPadding="false" />
+            android:clipToPadding="false"
+            android:padding="12dp" />
     </LinearLayout>
 
     <!-- =======================
