@@ -6,10 +6,13 @@ import com.example.lendmark.data.local.RecentRoomEntity
 import com.example.lendmark.data.sources.announcement.*
 import com.example.lendmark.ui.home.adapter.Room
 import com.example.lendmark.ui.main.MyApp
-import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+
 
 data class UpcomingReservationInfo(
     val reservationId: String,
@@ -123,39 +126,95 @@ class HomeViewModel : ViewModel() {
             }
     }
 
+    // HomeViewModel.kt
     private fun loadUpcomingReservation() {
         if (uid == null) {
             _upcomingReservation.value = null
             return
         }
 
+        // 1. 쿼리 수정: 'timestamp' 정렬 제거 (데이터에 없을 확률 높음)
         db.collection("reservations")
             .whereEqualTo("userId", uid)
-            .whereEqualTo("status", "approved")
-            .whereGreaterThanOrEqualTo("timestamp", Timestamp.now())
-            .orderBy("timestamp")
-            .limit(1)
+            .whereEqualTo("status", "approved") // 승인된 예약만 가져오기
             .get()
             .addOnSuccessListener { snap ->
                 if (snap.isEmpty) {
+                    Log.d("HomeVM", "예약 없음")
                     _upcomingReservation.value = null
                     return@addOnSuccessListener
                 }
 
-                val doc = snap.documents.first()
+                val now = System.currentTimeMillis()
+                val oneHourInMillis = 60 * 60 * 1000 // 1시간
+                val oneHourLater = now + oneHourInMillis
 
-                val buildingId = doc.getString("buildingId") ?: ""
-                val roomId = doc.getString("roomId") ?: ""
-                val start = doc.getLong("periodStart")?.toInt() ?: 0
-                val end = doc.getLong("periodEnd")?.toInt() ?: 0
-                val date = doc.getString("date") ?: ""
+                // 2. 모든 예약을 순회하며 '1시간 이내'인 것 찾기
+                val targetDoc = snap.documents.firstOrNull { doc ->
+                    val dateStr = doc.getString("date") ?: ""       // 예: "2025-12-09"
+                    val periodStart = doc.getLong("periodStart")?.toInt() ?: -1
 
-                _upcomingReservation.value = UpcomingReservationInfo(
-                    reservationId = doc.id,
-                    roomName = "$buildingId $roomId",
-                    time = "$date • ${periodToTime(start)} - ${periodToTime(end)}"
-                )
+                    if (dateStr.isNotEmpty() && periodStart != -1) {
+                        // 날짜와 교시를 시간(millis)으로 변환
+                        val startTimeMillis = convertToMillis(dateStr, periodStart)
+
+                        // 로그 찍어서 확인해보기 (Logcat에서 'HomeVM' 검색)
+                        Log.d("HomeVM", "예약시간: $startTimeMillis, 현재시간: $now, 차이: ${(startTimeMillis - now) / 1000 / 60}분")
+
+                        // 조건: 현재 시간보다는 미래이고, 1시간 이내에 시작하는가?
+                        startTimeMillis in now..oneHourLater
+                    } else {
+                        false
+                    }
+                }
+
+                // 3. 찾은 결과가 있으면 UI 업데이트
+                if (targetDoc != null) {
+                    val buildingId = targetDoc.getString("buildingId") ?: ""
+                    val roomId = targetDoc.getString("roomId") ?: ""
+                    val start = targetDoc.getLong("periodStart")?.toInt() ?: 0
+                    val end = targetDoc.getLong("periodEnd")?.toInt() ?: 0
+                    val date = targetDoc.getString("date") ?: ""
+
+                    _upcomingReservation.value = UpcomingReservationInfo(
+                        reservationId = targetDoc.id,
+                        roomName = "$buildingId $roomId",
+                        time = "$date • ${periodToTime(start)} - ${periodToTime(end)}"
+                    )
+                } else {
+                    _upcomingReservation.value = null
+                }
             }
+            .addOnFailureListener { e ->
+                Log.e("HomeVM", "DB 에러: ${e.message}")
+                _upcomingReservation.value = null
+            }
+    }
+
+    // 날짜(String) + 교시(Int) -> 시간(Long) 변환 함수 추가
+    private fun convertToMillis(dateStr: String, periodStart: Int): Long {
+        return try {
+            // 날짜 포맷 (DB에 저장된 형태가 "yyyy-MM-dd" 라고 가정)
+            // 만약 "yyyy.MM.dd" 등을 쓴다면 아래 패턴을 수정해야 합니다.
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val date = sdf.parse(dateStr) ?: return 0L
+
+            val calendar = Calendar.getInstance()
+            calendar.time = date
+
+            // 교시 -> 시간 변환 (0교시 = 08시, 1교시 = 09시 ...)
+            val hourOfDay = 8 + periodStart
+
+            calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
+            calendar.set(Calendar.MINUTE, 0)
+            calendar.set(Calendar.SECOND, 0)
+            calendar.set(Calendar.MILLISECOND, 0)
+
+            calendar.timeInMillis
+        } catch (e: Exception) {
+            e.printStackTrace()
+            0L
+        }
     }
 
     private fun periodToTime(period: Int): String {
