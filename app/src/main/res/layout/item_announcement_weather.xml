@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="10dp"
+    app:cardCornerRadius="18dp"
+    app:cardElevation="8dp"
+    android:padding="30dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    <!-- 메인 영역 -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+    <!-- 왼쪽 큰 아이콘 -->
+    <ImageView
+        android:id="@+id/ivWeatherIcon"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_marginEnd="24dp"
+        android:scaleType="centerInside" />
+
+    <!-- 오른쪽 텍스트 -->
+    <LinearLayout
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/tvDesc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="맑음"
+        android:textSize="22sp"
+        android:textColor="#333333"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:id="@+id/tvTemp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="-4°C"
+        android:textSize="40sp"
+        android:textColor="#111111"
+        android:textStyle="bold"/>
+    </LinearLayout>
+
+    </LinearLayout>
+
+    </LinearLayout>
+
+    </androidx.cardview.widget.CardView>

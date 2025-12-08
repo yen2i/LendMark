@@ -1,12 +1,9 @@
 package com.example.lendmark.ui.home
 
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.example.lendmark.data.local.RecentRoomEntity
-import com.example.lendmark.ui.home.adapter.Announcement
+import com.example.lendmark.data.sources.announcement.*
 import com.example.lendmark.ui.home.adapter.Room
 import com.example.lendmark.ui.main.MyApp
 import com.google.firebase.Timestamp
@@ -25,8 +22,16 @@ class HomeViewModel : ViewModel() {
     private val db = FirebaseFirestore.getInstance()
     private val uid = FirebaseAuth.getInstance().currentUser?.uid
 
-    private val _announcements = MutableLiveData<List<Announcement>>()
-    val announcements: LiveData<List<Announcement>> = _announcements
+    // ⭐ ANNOUNCEMENT 슬라이드 구성 요소들
+    private val announcementRepo = AnnouncementRepository(
+        weatherRepo = WeatherRepository(),
+        academicCrawler = AcademicCrawler()
+    )
+
+    private val _announcementSlides = MutableLiveData<List<AnnouncementItem>>()
+    val announcementSlides: LiveData<List<AnnouncementItem>> = _announcementSlides
+
+
 
     private val _frequentlyUsedRooms = MutableLiveData<List<Room>>()
     val frequentlyUsedRooms: LiveData<List<Room>> = _frequentlyUsedRooms
@@ -37,53 +42,46 @@ class HomeViewModel : ViewModel() {
     private val _recentViewedRooms = MutableLiveData<List<RecentRoomEntity>>()
     val recentViewedRooms: LiveData<List<RecentRoomEntity>> = _recentViewedRooms
 
+    private val _searchResults = MutableLiveData<List<String>>()
+    val searchResults: LiveData<List<String>> = _searchResults
+
 
     fun loadHomeData() {
-        // 공지
-        _announcements.value = listOf(
-            Announcement("Announcement", "Mon - Fri 09:00 - 18:00\nHolidays and vacations are closed"),
-            Announcement("Review Event", "If you leave a review for your classroom, we will give you a voucher.")
-        )
-
+        loadAnnouncementSlides()
         loadFrequentlyUsedRooms()
         loadUpcomingReservation()
         loadRecentViewedRooms()
     }
 
-
-    // ---------------------------------------------------------
-    // ⭐ 1. 최근 본 강의실(LOCAL DB / ROOM)
-    // ---------------------------------------------------------
+    private fun loadAnnouncementSlides() {
+        viewModelScope.launch {
+            val slides = announcementRepo.loadAnnouncements()
+            _announcementSlides.postValue(slides)
+        }
+    }
 
     fun loadRecentViewedRooms() {
         viewModelScope.launch {
             val dao = MyApp.database.recentRoomDao()
-            val rooms = dao.getRecentRooms()
-            _recentViewedRooms.postValue(rooms)
+            _recentViewedRooms.postValue(dao.getRecentRooms())
         }
     }
 
     fun addRecentViewedRoom(roomId: String, buildingId: String, roomName: String) {
         viewModelScope.launch {
             val dao = MyApp.database.recentRoomDao()
-
-            val entry = RecentRoomEntity(
-                roomId = roomId,
-                buildingId = buildingId,
-                roomName = roomName,
-                viewedAt = System.currentTimeMillis()
+            dao.insertRecentRoom(
+                RecentRoomEntity(
+                    roomId = roomId,
+                    buildingId = buildingId,
+                    roomName = roomName,
+                    viewedAt = System.currentTimeMillis()
+                )
             )
-
-            dao.insertRecentRoom(entry)
             dao.trimRecentRooms()
             loadRecentViewedRooms()
         }
     }
-
-
-    // ---------------------------------------------------------
-    // ⭐ 2. 자주 사용하는 강의실 (FIRESTORE)
-    // ---------------------------------------------------------
 
     private fun loadFrequentlyUsedRooms() {
         if (uid == null) {
@@ -94,91 +92,36 @@ class HomeViewModel : ViewModel() {
         db.collection("reservations")
             .whereEqualTo("userId", uid)
             .get()
-            .addOnSuccessListener { documents ->
-                if (documents.isEmpty) {
-                    Log.d("FREQ", "No reservations found for user")
+            .addOnSuccessListener { docs ->
+                if (docs.isEmpty) {
                     _frequentlyUsedRooms.value = emptyList()
                     return@addOnSuccessListener
                 }
 
-                Log.d("FREQ", "Total reservations = ${documents.size()}")
+                val roomCounts = docs.mapNotNull { doc ->
+                    val b = doc.getString("buildingId")
+                    val r = doc.getString("roomId")
+                    if (b != null && r != null) "$b $r" else null
+                }.groupingBy { it }.eachCount()
 
-                val roomCounts = documents.mapNotNull { doc ->
-                    val buildingId = doc.getString("buildingId")
-                    val roomId = doc.getString("roomId")
-
-                    Log.d(
-                        "FREQ",
-                        "Reservation -> buildingId=$buildingId, roomId=$roomId"
-                    )
-
-                    if (buildingId != null && roomId != null)
-                        "$buildingId $roomId"
-                    else null
-                }
-                    .groupingBy { it }
-                    .eachCount()
-
-                Log.d("FREQ", "Grouped Rooms = $roomCounts")
-
-                val topRooms = roomCounts.entries
-                    .sortedByDescending { it.value }
-                    .take(3)
-
-                Log.d("FREQ", "Top rooms = $topRooms")
-
+                val top = roomCounts.entries.sortedByDescending { it.value }.take(3)
                 val result = mutableListOf<Room>()
 
-                topRooms.forEach { entry ->
-                    val parts = entry.key.split(" ")
-                    val buildingId = parts.getOrNull(0) ?: ""
-                    val roomId = parts.getOrNull(1) ?: ""
-
-                    Log.d("FREQ", "Processing room: buildingId=$buildingId, roomId=$roomId")
-
+                top.forEach { entry ->
+                    val (buildingId, roomId) = entry.key.split(" ")
                     db.collection("buildings").document(buildingId)
                         .get()
                         .addOnSuccessListener { doc ->
-                            if (!doc.exists()) {
-                                Log.e("FREQ", "Building document NOT FOUND for id=$buildingId")
-                            }
+                            val img = doc.getString("imageUrl") ?: ""
+                            result.add(Room("$buildingId Hall $roomId", img))
 
-                            val imageUrl = doc.getString("imageUrl") ?: ""
-
-                            Log.d(
-                                "FREQ",
-                                "Building loaded: id=$buildingId, imageUrl=$imageUrl"
-                            )
-
-                            result.add(
-                                Room(
-                                    name = "$buildingId Hall $roomId",
-                                    imageUrl = imageUrl
-                                )
-                            )
-
-                            Log.d("FREQ", "Added Room -> name=${"$buildingId Hall $roomId"}, imageUrl=$imageUrl")
-
-                            if (result.size == topRooms.size) {
-                                Log.d("FREQ", "Final result list ready: $result")
+                            if (result.size == top.size) {
                                 _frequentlyUsedRooms.value = result
                             }
                         }
-                        .addOnFailureListener { e ->
-                            Log.e("FREQ", "Error loading building $buildingId", e)
-                        }
                 }
             }
-            .addOnFailureListener { e ->
-                Log.e("FREQ", "Failed to load reservations", e)
-            }
     }
-
-
-
-    // ---------------------------------------------------------
-    // ⭐ 3. 곧 있을 예약 (FIRESTORE)
-    // ---------------------------------------------------------
 
     private fun loadUpcomingReservation() {
         if (uid == null) {
@@ -207,66 +150,40 @@ class HomeViewModel : ViewModel() {
                 val end = doc.getLong("periodEnd")?.toInt() ?: 0
                 val date = doc.getString("date") ?: ""
 
-                val timeText = "${periodToTime(start)} - ${periodToTime(end)}"
-
                 _upcomingReservation.value = UpcomingReservationInfo(
                     reservationId = doc.id,
                     roomName = "$buildingId $roomId",
-                    time = "$date • $timeText"
+                    time = "$date • ${periodToTime(start)} - ${periodToTime(end)}"
                 )
             }
-            .addOnFailureListener {
-                _upcomingReservation.value = null
-            }
     }
-
 
     private fun periodToTime(period: Int): String {
         val hour = 8 + period
         return String.format("%02d:00", hour)
     }
 
-    // 검색 결과를 담을 LiveData 추가
-    private val _searchResults = MutableLiveData<List<String>>()
-    val searchResults: LiveData<List<String>> = _searchResults
-
-
-    // ---------------------------------------------------------
-    // 4. 건물 검색 기능 (SEARCH)
-    // ---------------------------------------------------------
     fun searchBuilding(query: String) {
-        val cleanQuery = query.trim()
-
-        if (cleanQuery.isEmpty()) {
+        val clean = query.trim()
+        if (clean.isEmpty()) {
             _searchResults.value = emptyList()
             return
         }
 
-
-        // 'buildings' 컬렉션의 모든 문서를 가져옴
         db.collection("buildings")
             .get()
             .addOnSuccessListener { result ->
-                val matchedList = mutableListOf<String>()
-
-                for (document in result.documents) {
-                    // 1. 문서 안의 "name" 필드 값을 가져옵니다 (예: "Frontier Hall")
-                    val buildingName = document.getString("name")
-
-                    // 2. name 값이 존재하고, 검색어(query)를 포함하는지 확인 (대소문자 무시)
-                    // 예: "Frontier Hall" 안에 "frontier"가 포함되어 있으면 통과
-                    if (buildingName != null && buildingName.contains(cleanQuery, ignoreCase = true)) {
-                        matchedList.add(buildingName)
-                    }
+                val matched = result.documents.mapNotNull { doc ->
+                    val name = doc.getString("name")
+                    if (name != null && name.contains(clean, ignoreCase = true)) name else null
                 }
-
-                // 결과 리스트 업데이트
-                _searchResults.value = matchedList
+                _searchResults.value = matched
             }
             .addOnFailureListener {
                 _searchResults.value = emptyList()
             }
     }
+
     fun clearSearchResults() {
         _searchResults.value = emptyList()
     }

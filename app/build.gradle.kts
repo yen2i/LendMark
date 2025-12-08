@@ -68,7 +68,7 @@ dependencies {
     // Navigation component
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
     implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
-//
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -85,5 +85,13 @@ dependencies {
 
     // Kotlin Extensions + Coroutines support for Room
     implementation("androidx.room:room-ktx:2.6.1")
+
+    // Jsoup (학사일정 크롤링)
+    implementation("org.jsoup:jsoup:1.17.2")
+    // Retrofit2 (날씨 API)
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    // Gson (JSON 파싱)
+    implementation("com.google.code.gson:gson:2.10.1")
 
 }
